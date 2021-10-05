@@ -1,0 +1,208 @@
+---
+title: "PSet 2"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+# this prevents package loading message from appearing in the rendered version of your problem set
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+Note: Grading is based both on your graphs and verbal explanations. Follow all best practices *as discussed in class*, including choosing appropriate parameters for all graphs. *Do not expect the assignment questions to spell out precisely how the graphs should be drawn. Sometimes guidance will be provided, but the absense of guidance does not mean that all choices are ok.*
+
+Read *Graphical Data Analysis with R*, Ch. 4, 5
+
+#### Imports
+
+```{r}
+library('openintro')
+library('tidyverse')
+```
+
+### 1. House features 
+
+[5 points]
+
+Data: *ames* in the **openintro** package
+
+a) Create a frequency bar chart for the roof styles of the properties.
+
+scatter <- base +
+  geom_point(size=2, alpha=0.4) +
+  xlab('Price (in thousand dollars)') +
+  ylab('Living Area in square feet')
+
+
+b) Create a frequency bar chart for the variable representing the month in which the property was sold.
+
+
+c) List all the factor variables that have `"Ex" "Fa" "Gd" "Po" "TA"` as levels. 
+
+d) Create faceted bar charts using `facet_wrap()` to display the frequency distribution of all variables from part c). (Hint: transform the data first with `pivot_longer()`)
+
+
+### 2. Pet names
+
+[12 points]
+
+Data: *seattlepets* in the **openintro** package
+
+a) Create separate Cleveland dot plots for the 30 most popular dog names and 30 most popular cat names.
+
+b) Use a Cleveland dot plot to display the 30 names that are the most "dog" measured by the proportion of all animals with that name that are dogs. (You can remove goat and pig names from the dataset.) *Clearly state any decisions you make about what to include and not include and explain your reasoning.*
+
+c) Find the 30 most popular names for dogs and cats combined, and create a multidot Cleveland dot plot showing the counts for dogs, cats, and total for each of these 30 names. (One color for dogs, one color for cats, one color for total.) Order the dots by the total count.
+
+d) Create a scatterplot of popular cat names vs. popular dog names. Clearly some names are more "dog" names and some are more "cat" names. Decide on a metric for defining what is a "dog" name, a "cat" name, and a "neutral" name and state it explicity. What is your metric?
+
+e) Create a new variable for type of name ("dog", "cat" or "neutral") and redraw the scatterplot coloring the points by this variable. Label individual points as you see fit (don't label all of them.)
+
+f) What are your most interesting discoveries from this dataset?
+
+### 3. House sizes and prices
+
+[6 points]
+
+Data: *ames* in the **openintro** package
+
+For all, adjust parameters to the levels that provide the best views of the data.
+
+Draw four plots of `price` vs. `area` with the following variations:
+
+```{r}
+base <- ames %>% ggplot(aes(x=area, y=price/1000))
+```
+
+a) Scatterplot -- adjust point size and `alpha`.
+
+```{r}
+scatter <- base +
+  geom_point(size=2, alpha=0.4) +
+  xlab('Living Area in square feet') +
+  ylab('Price (in thousand dollars)') 
+  
+scatter
+```
+
+b) Scatterplot with density contour lines
+
+```{r}
+scatter +  
+  geom_density2d(size=0.25, colour="purple", bins=8)+
+  xlab('Living Area in square feet') +
+  xlab('Price (in thousand dollars)') 
+```
+
+c) Hexagonal heatmap of bin counts
+
+```{r}
+base + 
+  geom_hex(bins=15) +
+  scale_fill_gradient(low = "skyblue", high = "darkblue") +
+  xlab('Living Area in square feet') +
+  ylab('Price (in thousand dollars)')
+```
+
+d) Square heatmap of bin counts
+
+```{r}
+base +
+  geom_bin2d(bins=15) +
+  scale_fill_gradient(low = "skyblue", high = "darkblue") +
+  xlab('Living Area in square feet') +
+  ylab('Price (in thousand dollars)')
+```
+
+e) Describe noteworthy features of the data, using the “Movie ratings” example on page 82 (last page of Section 5.3) as a guide.
+
+#### Feature
+
+* The housing pricing in general has an upward trend and hence is positively correlated with the living area of the house. Majority of the houses follow this trend as bolstered by the dark spot in between the plot.
+* However there are also two sets of outliers in the set
+  * The first set is for those with low housing price with respect to very large areas relative to other houses which have greater price for areas less than the outliers.
+  * Second set are some houses with very large price values for lesser area in comparison with other houses that have similar areas.
+* There are just two houses which may seem to be outliers at first but are aligned with the noticed proportionality between the price and area.
+* Most of the density is concentrated with houses priced between $50000-$300000 and 500-2500 sq ft area
+* There aren't any houses which are priced extremely high but with low living area. Hence the diagonal half of the graph on the leftmost corner is empty. All of them seem to be below a boundary line, i.e. price < slope*area + y-intercept.
+
+### 4. Correlations
+
+[7 points]
+
+Data: *ames* in the **openintro** package
+
+a) Recreate the scatterplot from part 3 (`price` vs. `area`) this time faceting on `Neighborhood` (use `facet_wrap()`. Add best fitting lines and sort the facets by the slope of the best fitting line from low to high. (Use `lm()` to get the slopes.)
+
+```{r}
+ames_lm <- ames %>% 
+  group_by(Neighborhood) %>% 
+  group_modify(~ broom::tidy(lm(price ~ area, data=.x))) %>%
+  filter(term == "area")
+
+ames$slope <- ames_lm$estimate[match(ames$Neighborhood,ames_lm$Neighborhood)]
+
+ames %>% ggplot(aes(x=area/1000, y=price/1000)) +
+  geom_point(size=2, alpha=0.4) +
+  xlab('Living Area per 1000 square feet') +
+  ylab('Price (in thousand dollars)') +
+  facet_wrap(.~reorder(Neighborhood, slope), nrow = 7) +
+  geom_smooth(method = 'lm', formula = y~x)
+
+```
+
+b) Is the slope higher in neighborhoods with higher mean housing prices? Present graphical evidence and interpret in the context of this data.
+
+```{r}
+ames_mean <- ames %>%
+  group_by(Neighborhood) %>%
+  summarise_at(vars(price), list(mean_price = mean))
+
+ames_mean$slope <- ames_lm$estimate[match(ames_mean$Neighborhood,ames_lm$Neighborhood)]
+
+ames_mean %>%
+  ggplot(aes(x=slope, y=mean_price)) +
+  geom_point()
+```
+
+#### Inference: 
+
+* There seems to be a clear positive correlation of mean prices of the houses and the slope of the best fit line for a particular neighborhood. Therefore higher the slope of the best fit line for price vs area, greater is the mean price. 
+* There seems to be just one outlier to the extreme right which has a very large slope but doesn't seem to have the expected mean pricing of the house. 
+* In the context of this dataset, the above graph represents that the mean prices of the houses are greater for those neighbourhood that have a steep increase in prices for smaller changes of area.
+
+
+c) Repeat parts a) with the following adjustment: order the faceted plots by $R^2$ from the linear regression of `price` on `area` by `Neighborhood`. Is the $R^2$ higher in neighborhoods with higher mean housing prices? Are the results the same for slope and $R^2$? Explain using examples from the graphs.
+
+```{r}
+r_squared_calc <- function(dat_in, area='area', price='price'){
+  return(summary(lm(price ~ area, data=dat_in))$r.squared)
+} 
+ames <- ames %>% 
+  group_by(Neighborhood) %>%
+  do(data.frame(area = .$area,
+                price = .$price,
+                r_sqrd = r_squared_calc(.)))
+ames %>% ggplot(aes(x=area/1000, y=price/1000)) +
+  geom_point(size=2, alpha=0.4) +
+  xlab('Living Area per 1000 square feet') +
+  ylab('Price (in thousand dollars)') +
+  facet_wrap(.~reorder(Neighborhood, r_sqrd), nrow = 7) +
+  geom_smooth(method = 'lm', formula = y~x)
+
+ames_mean$r_sqrd <- ames$r_sqrd[match(ames_mean$Neighborhood,ames$Neighborhood)]
+
+ames_mean %>%
+  ggplot(aes(x=r_sqrd, y=mean_price)) +
+  geom_point()
+
+```
+
+#### Inferences
+
+* The results of $R^2$ vs slope is different from mean prices vs slope. Apparently there seems to be no correlation between the $R^2$ metric of the best fit line and the mean prices of a neighborhood. Hence we can't say much about the behavior of $R^2$ with higher mean prices.
+* The points are just spread across in a space with no clear trend making it difficult to give a trend analysis.
+* There is just one single data point/neighborhood that has an $R^2=1$ and this can be corresponding to th neighborhood that has just two houses. Since a line can fit perfectly well for two data points, the $R^2$ metric gives one.
+* For $R^2$ values close to ~0.6, there seems to be several instances of both high mean prices and relatively low mean prices and hence rendering no proper correlation.
+* Only two data points that have $R^2$ close to zero have relatively low mean prices. Although some examples of even lower mean prices can be seen with $R^2$ close to 0.5.
+
