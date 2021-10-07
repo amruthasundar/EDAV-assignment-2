@@ -89,9 +89,9 @@ b) Scatterplot with density contour lines
 
 ```{r}
 scatter +  
-  geom_density2d(size=0.25, colour="purple", bins=8)+
+  geom_density2d(size=0.25, colour="white", bins=8)+
   xlab('Living Area in square feet') +
-  xlab('Price (in thousand dollars)') 
+  ylab('Price (in thousand dollars)') 
 ```
 
 c) Hexagonal heatmap of bin counts
@@ -146,7 +146,7 @@ ames %>% ggplot(aes(x=area/1000, y=price/1000)) +
   geom_point(size=2, alpha=0.4) +
   xlab('Living Area per 1000 square feet') +
   ylab('Price (in thousand dollars)') +
-  facet_wrap(.~reorder(Neighborhood, slope), nrow = 7) +
+  facet_wrap(.~reorder(Neighborhood, slope), nrow = 4) +
   geom_smooth(method = 'lm', formula = y~x)
 
 ```
@@ -187,7 +187,7 @@ ames %>% ggplot(aes(x=area/1000, y=price/1000)) +
   geom_point(size=2, alpha=0.4) +
   xlab('Living Area per 1000 square feet') +
   ylab('Price (in thousand dollars)') +
-  facet_wrap(.~reorder(Neighborhood, r_sqrd), nrow = 7) +
+  facet_wrap(.~reorder(Neighborhood, r_sqrd), nrow = 4) +
   geom_smooth(method = 'lm', formula = y~x)
 
 ames_mean$r_sqrd <- ames$r_sqrd[match(ames_mean$Neighborhood,ames$Neighborhood)]
